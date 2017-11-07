@@ -1,12 +1,14 @@
-image: rust
-
 stages:
   - build
 
+variables:
+  CONTAINER_IMAGE: "rust"
+
 build:
   stage: build
-  script:
-    - cargo build --release
+  script: |
+    docker pull $CONTAINER_IMAGE
+    docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/myapp -w /usr/src/myapp $CONTAINER_IMAGE cargo build --release
   artifacts:
     paths:
-      - target/release/scaelc
+      - target/release/sc-audit-event-log-collector

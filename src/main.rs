@@ -1,20 +1,26 @@
-#![feature(plugin)]
-#![plugin(docopt_macros)]
-
 extern crate docopt;
 extern crate reqwest;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 
-use std::process;
-use std::error::Error;
+use docopt::Docopt;
 use serde_json::value::Value;
+use std::error::Error;
 use std::fs::File;
-use std::io::Write;
 use std::io;
+use std::io::Write;
 use std::path::Path;
+use std::process;
 
+
+#[derive(Debug, Deserialize)]
+struct Args {
+    arg_apikey: String,
+    flag_output: String,
+    flag_envelope: bool,
+    flag_server: String,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Data {
@@ -29,7 +35,7 @@ struct Data {
 }
 
 
-docopt!(Args derive Debug, "
+const USAGE: &'static str = "
 SC Audit Event Log Collector.
 
 Usage:
@@ -44,7 +50,7 @@ Options:
 
   -h --help                 Show this screen.
   --version                 Show version.
-");
+";
 
 
 fn write_logs(logs: Vec<Value>, filename: String, envelope: bool) {
@@ -87,16 +93,20 @@ fn fetch_logs(url: String, api_key: String) -> Result<Vec<Value>, Box<Error>> {
         let json: Data = resp.json()?;
         logs.extend(json.logs.as_array().unwrap().clone());
 
-        if json.count == json.total { break };
+        if json.count == json.total {
+            break;
+        };
         after = json.until;
-    };
+    }
 
     Ok(logs)
 }
 
 
 fn main() {
-    let args: Args = Args::docopt().deserialize().unwrap_or_else(|e| e.exit());
+    let args: Args = Docopt::new(USAGE)
+        .and_then(|d| d.deserialize())
+        .unwrap_or_else(|e| e.exit());
 
     println!("Fetching logs...");
     let logs = fetch_logs(args.flag_server, args.arg_apikey);
@@ -108,5 +118,4 @@ fn main() {
             process::exit(1);
         }
     };
-
 }
