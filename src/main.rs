@@ -20,6 +20,10 @@ struct Args {
     flag_output: String,
     flag_envelope: bool,
     flag_server: String,
+    flag_since: String,
+    flag_until: String,
+    flag_before: String,
+    flag_after: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -29,8 +33,8 @@ struct Data {
     version: i32,
     result: String,
     tid: String,
-    since: String,
-    until: String,
+    since: Option<String>,
+    until: Option<String>,
     logs: Value,
 }
 
@@ -44,6 +48,11 @@ Usage:
 Options:
   -o FILE, --output=FILE    Where to write the output (default is stdout).
   -e --envelope             Add a JSON list envelope to the output.
+
+  -s DATE --since DATE      Fetch logs whose date is greater than or equal to DATE.
+  -a DATE --after DATE      Fetch logs whose date is greater than DATE.
+  -u DATE --until DATE      Fetch logs whose date is less than or equal to DATE.
+  -b DATE --before DATE     Fetch logs whose date is less than DATE.
 
   --server=SERVER           The domain of the server to contact
                             [default: https://accounts.silentcircle.com].
@@ -75,12 +84,29 @@ fn write_logs(logs: Vec<Value>, filename: String, envelope: bool) {
 }
 
 
-fn fetch_logs(url: String, api_key: String) -> Result<Vec<Value>, Box<Error>> {
+fn fetch_logs(
+    url: String,
+    api_key: String,
+    since: String,
+    after: String,
+    until: String,
+    before: String,
+) -> Result<Vec<Value>, Box<Error>> {
     let mut logs: Vec<Value> = Vec::new();
-    let mut after = String::new();
+    let mut local_after: String = after;
+
+    println!("{:?}", before);
 
     loop {
-        let url = format!("{}/scmc/api/logs/?api_key={}&after={}", url, api_key, after);
+        let url = format!(
+            "{}/scmc/api/logs/?api_key={}&since={}&after={}&until={}&before={}",
+            url,
+            api_key,
+            since,
+            local_after,
+            until,
+            before
+        );
 
         let mut resp = reqwest::get(url.as_str())?;
 
@@ -96,7 +122,7 @@ fn fetch_logs(url: String, api_key: String) -> Result<Vec<Value>, Box<Error>> {
         if json.count == json.total {
             break;
         };
-        after = json.until;
+        local_after = json.until.expect("The \"until\" parameter in the server response was unexpectedly null.");
     }
 
     Ok(logs)
@@ -109,7 +135,14 @@ fn main() {
         .unwrap_or_else(|e| e.exit());
 
     println!("Fetching logs...");
-    let logs = fetch_logs(args.flag_server, args.arg_apikey);
+    let logs = fetch_logs(
+        args.flag_server,
+        args.arg_apikey,
+        args.flag_since,
+        args.flag_after,
+        args.flag_until,
+        args.flag_before,
+    );
 
     match logs {
         Ok(data) => write_logs(data, args.flag_output, args.flag_envelope),
