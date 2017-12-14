@@ -2,6 +2,7 @@
 name = "sc-audit-event-log-collector"
 version = "0.1.0"
 authors = ["Stavros Korokithakis <hi@stavros.io>"]
+license = "Apache-2.0"
 
 [dependencies]
 docopt = "0.8"
