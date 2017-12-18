@@ -110,8 +110,6 @@ fn fetch_logs(url: String,
     let mut logs: Vec<Value> = Vec::new();
     let mut local_after: String = after;
 
-    println!("{:?}", before);
-
     loop {
         let url = format!("{}/scmc/api/logs/?api_key={}&since={}&after={}&until={}&before={}",
                           url,
