@@ -58,6 +58,8 @@ SC Audit Event Log Collector.
 
 Usage:
   scaelc [options] <apikey>
+  scaelc --version
+  scaelc -h | --help
 
 Options:
   -o FILE, --output=FILE    Where to write the output (default is stdout).
@@ -98,37 +100,33 @@ fn write_logs(logs: Vec<Value>, filename: String, envelope: bool) {
 }
 
 
-fn fetch_logs(
-    url: String,
-    api_key: String,
-    since: String,
-    after: String,
-    until: String,
-    before: String,
-) -> Result<Vec<Value>, Box<Error>> {
+fn fetch_logs(url: String,
+              api_key: String,
+              since: String,
+              after: String,
+              until: String,
+              before: String)
+              -> Result<Vec<Value>, Box<Error>> {
     let mut logs: Vec<Value> = Vec::new();
     let mut local_after: String = after;
 
     println!("{:?}", before);
 
     loop {
-        let url = format!(
-            "{}/scmc/api/logs/?api_key={}&since={}&after={}&until={}&before={}",
-            url,
-            api_key,
-            since,
-            local_after,
-            until,
-            before
-        );
+        let url = format!("{}/scmc/api/logs/?api_key={}&since={}&after={}&until={}&before={}",
+                          url,
+                          api_key,
+                          since,
+                          local_after,
+                          until,
+                          before);
 
         let mut resp = reqwest::get(url.as_str())?;
 
         if !resp.status().is_success() {
-            Err(format!(
-                "There was an error contacting the server: {:?}",
-                resp.status()
-            ))?;
+            Err(format!("There was an error contacting the server: {:?}",
+                        resp.status()))
+                ?;
         }
         let json: Data = resp.json()?;
         logs.extend(json.logs.as_array().unwrap().clone());
@@ -136,7 +134,8 @@ fn fetch_logs(
         if json.count == json.total {
             break;
         };
-        local_after = json.until.expect("The \"until\" parameter in the server response was unexpectedly null.");
+        local_after = json.until
+            .expect("The \"until\" parameter in the server response was unexpectedly null.");
     }
 
     Ok(logs)
@@ -149,14 +148,12 @@ fn main() {
         .unwrap_or_else(|e| e.exit());
 
     println!("Fetching logs...");
-    let logs = fetch_logs(
-        args.flag_server,
-        args.arg_apikey,
-        args.flag_since,
-        args.flag_after,
-        args.flag_until,
-        args.flag_before,
-    );
+    let logs = fetch_logs(args.flag_server,
+                          args.arg_apikey,
+                          args.flag_since,
+                          args.flag_after,
+                          args.flag_until,
+                          args.flag_before);
 
     match logs {
         Ok(data) => write_logs(data, args.flag_output, args.flag_envelope),
