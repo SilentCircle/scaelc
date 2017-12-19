@@ -13,6 +13,7 @@
 // limitations under the License.
 
 extern crate docopt;
+extern crate openssl_probe;
 extern crate reqwest;
 #[macro_use]
 extern crate serde_derive;
@@ -143,6 +144,8 @@ fn fetch_logs(url: String,
 
 
 fn main() {
+    openssl_probe::init_ssl_cert_env_vars();
+
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());

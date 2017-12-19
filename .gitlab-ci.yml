@@ -2,13 +2,13 @@ stages:
   - build
 
 variables:
-  CONTAINER_IMAGE: "rust"
+  CONTAINER_IMAGE: "ekidd/rust-musl-builder"
 
 build:
   stage: build
   script: |
     docker pull $CONTAINER_IMAGE
-    docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/myapp -w /usr/src/myapp $CONTAINER_IMAGE cargo build --release
+    docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/home/rust/src $CONTAINER_IMAGE cargo build --release
   artifacts:
     paths:
-      - target/release/sc-audit-event-log-collector
+      - target/x86_64-unknown-linux-musl/release/sc-audit-event-log-collector
