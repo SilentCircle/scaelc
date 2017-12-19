@@ -90,6 +90,8 @@ fn write_logs(logs: Vec<Value>, filename: String, envelope: bool) {
     if envelope {
         // Wrap the lines in a list [].
         serde_json::to_writer(output, &logs).expect("Could not write output.");
+        // Write a final newline.
+        println!("");
     } else {
         // No envelope.
         for line in logs.iter() {
