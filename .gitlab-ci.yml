@@ -8,7 +8,8 @@ build:
   stage: build
   script: |
     docker pull $CONTAINER_IMAGE
-    docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/home/rust/src $CONTAINER_IMAGE cargo build --release
+    docker run --rm -v "$(pwd)":/home/rust/src $CONTAINER_IMAGE ./build.sh
   artifacts:
+    expire_in: 1 mo
     paths:
       - target/x86_64-unknown-linux-musl/release/sc-audit-event-log-collector
