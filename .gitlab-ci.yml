@@ -1,5 +1,6 @@
 stages:
   - build
+  - release
 
 variables:
   CONTAINER_IMAGE: "ekidd/rust-musl-builder"
@@ -13,3 +14,12 @@ build:
     expire_in: 1 mo
     paths:
       - target/x86_64-unknown-linux-musl/release/sc-audit-event-log-collector
+
+release:
+  stage: release
+  script: ./release.sh
+  dependencies:
+    - build
+  only:
+    - master
+    - tags
